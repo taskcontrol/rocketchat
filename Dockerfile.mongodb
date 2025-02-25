@@ -1,0 +1,9 @@
+FROM docker.io/bitnami/mongodb:${MONGODB_VERSION:-5.0}
+
+COPY ./my_wrapper_script_mongodb.sh /usr/sbin/
+
+USER root
+
+EXPOSE 27017 
+
+ENTRYPOINT ["/usr/sbin/my_wrapper_script_mongodb.sh"]

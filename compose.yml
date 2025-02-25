@@ -1,10 +1,23 @@
+
+networks:
+    backend-network:
+      ipam:
+        config:
+          - subnet: 172.26.0.0/16
+
 volumes:
-  mongodb_data: { driver: local }
+  mongodb_data:
+    external: true 
 
 services:
+
   rocketchat:
-    image: registry.rocket.chat/rocketchat/rocket.chat:${RELEASE:-latest}
-    restart: always
+    build:
+     context: .
+     dockerfile: Dockerfile.rocket
+    container_name: rocket
+    hostname: rocket.taskcontrol.net
+    restart: unless-stopped
     labels:
       traefik.enable: "true"
       traefik.http.routers.rocketchat.rule: Host(`${DOMAIN:-}`)
@@ -29,10 +42,17 @@ services:
       - ${PORT:-3000}
     ports:
       - "${BIND_IP:-0.0.0.0}:${HOST_PORT:-3000}:${PORT:-3000}"
+    networks:
+        backend-network:
+         ipv4_address: 172.26.0.42
 
   mongodb:
-    image: docker.io/bitnami/mongodb:${MONGODB_VERSION:-5.0}
-    restart: always
+    build:
+     context: .
+     dockerfile: Dockerfile.mongodb
+    container_name: mongodb
+    hostname: mongodb.taskcontrol.net
+    restart: unless-stopped
     volumes:
       - mongodb_data:/bitnami/mongodb
     environment:
@@ -44,3 +64,7 @@ services:
       MONGODB_ADVERTISED_HOSTNAME: ${MONGODB_ADVERTISED_HOSTNAME:-mongodb}
       MONGODB_ENABLE_JOURNAL: ${MONGODB_ENABLE_JOURNAL:-true}
       ALLOW_EMPTY_PASSWORD: ${ALLOW_EMPTY_PASSWORD:-yes}
+    networks:
+        backend-network:
+         ipv4_address: 172.26.0.41
+
